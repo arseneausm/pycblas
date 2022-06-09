@@ -7,7 +7,7 @@
 /* alias cbgcc='gcc -I /home/arseneusm/github/cblas/CBLAS/include' */
 #include "/home/arseneausm/Documents/github/cblas/CBLAS/include/cblas.h"
 
-double *build_double_array(PyObject *py_obj, int len) {
+double *build_array(PyObject *py_obj, int len) {
 	double *arr;
 	arr = (double *) malloc(sizeof(double *)*len);
 
@@ -18,43 +18,6 @@ double *build_double_array(PyObject *py_obj, int len) {
 	}
 
 	return arr;
-}
-
-float *build_float_array(PyObject *py_obj, int len) {
-    float *arr;
-    arr = (float *) malloc(sizeof(float *)*len);
-
-    for(int index = 0; index < len; index++) {
-        PyObject *item;
-        item = PyList_GetItem(py_obj, index);
-        arr[index] = PyFloat_AsDouble(item);
-    }
-
-    return arr;
-}
-
-
-static PyObject *sdot(PyObject *self, PyObject *args) {
-	int n;
-
-	PyObject *py_sx, *py_sy;	
-	float *sx, *sy;
-
-	if(!PyArg_ParseTuple(args, "iOO", &n, &py_sx, &py_sy)) {
-		return NULL;
-	}
-
-	sx = build_float_array(py_sx, n);
-	sy = build_float_array(py_sy, n);
-
-	float res = cblas_sdot(n, sx, 1, sy, 1);
-
-	free(sx);
-	free(sy);
-
-	double result = res;
-	
-	return PyFloat_FromDouble(result);
 }
 
 static PyObject *dgemv(PyObject *self, PyObject *args) {
@@ -90,11 +53,15 @@ static PyObject *dgemv(PyObject *self, PyObject *args) {
 		return NULL;
 	} 
 
-	a = build_double_array(py_a, m*n);
-	x = build_double_array(py_x, m);
-	y = build_double_array(py_y, m);
+	a = build_array(py_a, m*n);
+	x = build_array(py_x, m);
+	y = build_array(py_y, m);
 
 	cblas_dgemv( order, transa, m, n, alpha, a, lda, x, incx, beta, y, incy );
+
+	for( i = 0; i < n; i++) {
+		printf(" y%d = %f\n", i, y[i]);
+	}
 
 	PyObject *ret = Py_BuildValue("[d,d,d,d]", y[0]/1.0, y[1]/1.0, y[2]/1.0, y[3]/1.0);	
 
@@ -106,8 +73,7 @@ static PyObject *dgemv(PyObject *self, PyObject *args) {
 }
 
 static PyMethodDef PyCBLASMethods[] = {
-	{"dgemv", dgemv, METH_VARARGS, "Matrix multiplication (4x4)"},
-	{"sdot", sdot, METH_VARARGS, "Dot product"},
+	{"dgemv", dgemv, METH_VARARGS, "dgemv"},
 	{NULL, NULL, 0, NULL}
 };
 
@@ -122,3 +88,6 @@ static struct PyModuleDef pycblas = {
 PyMODINIT_FUNC PyInit_pycblas(void) {
 	return PyModule_Create(&pycblas);
 }
+
+
+

@@ -11,7 +11,8 @@ lda = 4
 x = [1,2,1,1]
 y = [1,1,1,1]
 
-alpha = 1
+alpha = 2
 beta = 0
 
 print(pycblas.dgemv(a, m, n, lda, x, y, alpha, beta, 1, 1))
+print(pycblas.sdot(len(x), x, y))
